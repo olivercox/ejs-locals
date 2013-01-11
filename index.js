@@ -87,7 +87,16 @@ var renderFile = module.exports = function(file, options, fn){
     //Get the file path relative to the theme folder by replacing the options.settings.views path with the options.settings['theme'] path
     var themeFilePath = dirname(file).replace(resolve(options.settings.views), resolve(options.settings['theme']))
     //If the current file exists reletive to the theme folder set the file to that path
-    if (fs.existsSync(resolve(themeFilePath, basename(file)))) file = resolve(themeFilePath, basename(file));
+    var engine = options.settings['view engine'] || 'ejs'
+    , desiredExt = '.' + engine
+    , ext = extname(file) || desiredExt
+    , key = [themeFilePath, file, ext].join('-');
+    //Load from the cache if it's already been resolved
+    if (options.cache && cache[key]) file = cache[key]; console.log('template loaded from cache');
+    if (fs.existsSync(resolve(themeFilePath, basename(file)))) {
+        cache[key] = resolve(themeFilePath, basename(file));
+        file = resolve(themeFilePath, basename(file));
+    }
   }
     
   ejs.renderFile(file, options, function(err, html) {
